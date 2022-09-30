@@ -1,7 +1,8 @@
 import sqlite3
-import csv
+import json
 import os
 import classes
+import functions
 
 def clear(): # Clear the terminal
         os.system('cls' if os.name=='nt' else 'clear')
@@ -42,7 +43,7 @@ class Menu:
     def user_choice(self):
         return input("Make a choice: ")
     
-    #def wait_for_user(self):
+    def wait_for_user(self):
         if self.running:
             input("Press any key to go back.")
             clear()
@@ -54,8 +55,8 @@ class Menu:
             clear()
             print(Menu.ADD_MENU_TEXT)
             add = input("Make a choice: ")
-            if add == "1":
-                pass
+            if add == "1": # Add Media menu
+                functions.add_media()
             elif add == "2":
                 pass
             elif add == "3":
@@ -67,8 +68,8 @@ class Menu:
             clear()
             print(Menu.SEARCH_MENU_TEXT)
             search = input("Make a choice: ")
-            if search == "1":
-                pass
+            if search == "1": # Search Media menu
+                functions.search_database()
             elif search == "2":
                 pass
             elif search == "3":
@@ -79,11 +80,12 @@ class Menu:
                 
     def start_loop(self):
         self.running = True
+        functions.import_database()
         while self.running:
-            clear()
+            clear()   
             print(Menu.MAIN_MENU_TEXT)
             choice = self.user_choice()
             self.menu_commands(choice)
-            #self.wait_for_user()
+            self.wait_for_user()
      
 Menu().start_loop()

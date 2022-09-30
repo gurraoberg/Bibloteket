@@ -19,21 +19,32 @@ def menu():
     if choice == "1":
         clear()
         print("1. Add Book")
-        print("2. Add Movie")
+        print("2. Add Movie / Check lib value")
         print("3. Add CD")
         print("0. Go back.")
         add_choice = input("Make a choice: ")
         if add_choice == "1":
             add_book()
         elif add_choice == "2":
-            pass
+            whole_value()
         elif add_choice == "3":
             pass
         elif add_choice == "0":
             clear()
             menu()
     elif choice == "2":
-        search_books()
+        clear()
+        print("1. Search books")
+        print("2. List books")
+        print("0. Go back.")
+        search_choice = input("Make a choice: ")
+        if search_choice == "1":
+            search_books()
+        elif search_choice == "2":
+            sorted_book()
+        elif search_choice == "0":
+            clear()
+            menu()
     elif choice == "3":
         book_value()
     elif choice == "0":
@@ -125,6 +136,38 @@ def book_value(): # FUNGERAR JÄLVIGT SVÅRT ATT LÖSA
             new_int = current_year - book[4]
             new_price = book[3] * 0.9**(new_int) ### FUNKAR LÖST
             print(f"The book is {new_int} years old, so the current price is {new_price}sek.")
+
+def sorted_book():
+    connection = sqlite3.connect(db_books)
+    cursor = connection.cursor()
+    
+    cursor.execute("SELECT * FROM books ORDER BY title")
+    result = cursor.fetchall()
+    if result == None:
+        print("Book not found.")
+        menu()
+    else:
+        print(f"Sorted by title: {result[0]}{lb}") # Sorted by ascending order.
+        back = input("\nGo back to menu, Enter 0: ")
+        if back == "0":
+            menu()
+        else:
+            print("Press 0 to go back to menu.")
+            
+    connection.commit()
+    connection.close()
+
+def whole_value():
+    connection = sqlite3.connect(db_books)
+    cursor = connection.cursor()
+    
+    cursor.execute("SELECT SUM(price) FROM books") ## Fungerar, behöver snyggas till.
+    value = cursor.fetchall()
+    if value == None:
+        print("Error")
+    else:
+        print(value)
+            
 
 def main():
     import_books()

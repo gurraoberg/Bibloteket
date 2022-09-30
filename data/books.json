@@ -1,0 +1,18 @@
+{
+    "Books": [
+    {
+        "Title": "Sagan om ringen",
+        "Author": "J.R.R. Tolkien",
+        "Pages": "1147",
+        "Price": "300sek",
+        "Year": "2020"
+    },
+    {
+        "Title": "Harry Potter",
+        "Author": "J.K. Rowling",
+        "Pages": "223",
+        "Price": "399sek",
+        "Year": "2012"
+    }
+]
+}

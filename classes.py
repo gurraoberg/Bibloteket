@@ -1,4 +1,3 @@
-import sqlite3
 import json
 import os
 
@@ -31,7 +30,3 @@ class CD:
         self.playtime = playtime
         self.price = price
         
-class Sql:
-    def __init__(self) -> None:
-        connection = sqlite3.connect("data/books.json")
-        cursor = connection.cursor

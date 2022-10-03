@@ -62,13 +62,18 @@ def import_books():
                        Pages TEXT,
                        Price INT,
                        Year INT)""")
-        if db_books is None: # Doesnt work, prints duplicates. FIX LATER
-            pass
-        else:
+        
+        cursor.execute("SELECT COUNT(*) FROM books") 
+        check_empty = cursor.fetchall()
+        if check_empty[0][0] == 0: # Check if table is empty, if empty insert CSV.
+            print("Table is empty.") # Avoiding duplicates at the start.
             for row in bookdata:
                 cursor.execute("""INSERT INTO books
                            VALUES(
                            ?,?,?,?,?)""", row)
+            print("Inserting values")
+        else:
+            print("Table not empty")
             
         connection.commit()
         connection.close()

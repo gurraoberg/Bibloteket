@@ -211,8 +211,7 @@ def add_media(): # Add media to library.
 def clear(): # Clear the terminal
         os.system('cls' if os.name=='nt' else 'clear')
 
-def check_value(): # FUNGERAR JÄLVIGT SVÅRT ATT LÖSA 
-    # Formeln är tex 100 / 0,9 = 90 osv... för att sänka värdet 10%
+def check_value(): # WORKS
     connection = sqlite3.connect(library_db)
     cursor = connection.cursor()
     
@@ -257,33 +256,38 @@ def check_value(): # FUNGERAR JÄLVIGT SVÅRT ATT LÖSA
             else:
                 print(f"Purchase Price: {movie[3]}sek{lb}Year: {movie[4]}")
                 print(f"The movie is {new_int} years old, so the current price is {new_price:.2f}sek.")
-    elif choice == "3": # Check value of a CD # Doesnt work yet
+    elif choice == "3": # Check value of a CD # WORKS
         print("Check the values of a CD.")
         title = input("Enter album title: ")
         cursor.execute("SELECT * FROM cd WHERE title=?", (title,))
         cd = cursor.fetchone()
-        #cursor.execute("SELECT COUNT(title) FROM cd GROUP BY title HAVING COUNT(title) > 1")
+        
+        new_int = current_year - cd[5]
+        new_price = cd[4] * 0.9**(new_int)
+        
         cursor.execute("""SELECT SUM(COUNT)
                        FROM (
                            SELECT title, COUNT(title) count
                            FROM cd WHERE title=?
                            GROUP BY title
-                           HAVING COUNT(title) > 1
+                           HAVING COUNT(title) > 0
                        )
                        GROUP BY title
                        """, (title,))
         multiple = cursor.fetchall()
         
         for x in multiple:
-            value = int(x[0])
+            value = int(x[0]) # Convert to int
         
         if cd == None:
             print("CD not found.")
         else:
             if value > 1:
-                        result = cd[4] / value
-                        print(f"{title} is worth {result:.0f}sek, since we have {value} copies of it.")
-
+                result = cd[4] / value
+                print(f"{title} is worth {result:.0f}sek, since we have {value} copies of it.")
+            else:
+                print(f"Purchase Price: {cd[4]}sek Year: {cd[5]}")
+                print(f"The CD is {new_int} years old, so the current price is {new_price:.2f}sek.")
     elif choice == "0":
         menu()
         

@@ -115,18 +115,27 @@ def import_library(): # Creating SQL table and importing CSV to it.
         connection.commit()
         connection.close()
 
-def search_books(): # Search for a book with title.
+def search_books(): # Search for a book with title. IMPROVE
     connection = sqlite3.connect(library_db)
     cursor = connection.cursor()
     
     search = input("Search for book title: ").lower()
-    cursor.execute("SELECT * FROM library WHERE Title=?", (search,))
+    #cursor.execute("SELECT * FROM library WHERE Title=?", (search,))
+    cursor.execute("""SELECT * FROM
+                   (SELECT title, author FROM library
+                   UNION ALL
+                   SELECT title, director FROM movies
+                   UNION ALL
+                   SELECT title, artist FROM cd
+                   ) WHERE title=?
+                   """, (search,))
     book = cursor.fetchone()
     if book == None:
         print("Book not found.")
         menu()
     else:
-        print(f"Title: {book[0]}{lb}Author: {book[1]}{lb}Pages: {book[2]}{lb}Purchase price: {book[3]}{lb}Publishing year: {book[4]}")
+        print(f"{book[0]}, {book[1]}")
+        #print(f"Title: {book[0]}{lb}Author: {book[1]}{lb}Pages: {book[2]}{lb}Purchase price: {book[3]}{lb}Publishing year: {book[4]}")
         #print(f"Current value: {new_price}")
     
 def add_media(): # Add media to library.
@@ -136,6 +145,7 @@ def add_media(): # Add media to library.
     print("1. Add book")
     print("2. Add movie")
     print("3. Add CD")
+    print("0. Go back.")
     choice = input("Make a choice: ")
     if choice == "1": # Add book
         title = input("Enter Title: ").lower()
@@ -191,8 +201,10 @@ def add_media(): # Add media to library.
                 cursor.execute("INSERT INTO cd VALUES (?, ?, ?, ?, ?, ?)", (title, artist, tracks, length, price, year,))
                 print(f"Added {title} to the CD library.")
             else:
-                menu()
-            
+                menu()          
+    elif choice == "0":
+        clear()
+        menu_back()
     connection.commit()
     connection.close()
 
@@ -210,7 +222,7 @@ def check_value(): # FUNGERAR JÄLVIGT SVÅRT ATT LÖSA
     print("0. Go back.")
     choice = input("Make a choice: ")
     
-    if choice == "1": # Check value of a book
+    if choice == "1": # Check value of a book # WORKS
         print("Check the values of a book.")
         title = input("Enter title: ")
         cursor.execute("SELECT * FROM library WHERE title=?", (title,))
@@ -227,28 +239,41 @@ def check_value(): # FUNGERAR JÄLVIGT SVÅRT ATT LÖSA
                 new_int = current_year - book[4]
                 new_price = book[3] * 0.9**(new_int) ### FUNKAR LÖST
                 print(f"The book is {new_int} years old, so the current price is {new_price:.2f}sek.")
-    elif choice == "2": # Check value of a movie
+    elif choice == "2": # Check value of a movie # WORKS
         print("Check the values of a movie.")
         title = input("Enter title: ")
         cursor.execute("SELECT * FROM movies WHERE title=?", (title,))
         movie = cursor.fetchone()
+        
+        new_int = current_year - movie[4]
+        new_price = movie[3] * 0.9**(new_int)
+        
         if movie == None:
             print("Movie not found.")
         else:
-            if movie[4] < year_inc:
-                pass #
+            if movie[5] < 10:
+                wear_price = new_price * float(movie[5]) / 10
+                print(f"Wear Price: {wear_price:.2f}sek")
             else:
                 print(f"Purchase Price: {movie[3]}sek{lb}Year: {movie[4]}")
-                new_int = current_year - movie[4]
-                new_price = movie[3] * 0.9**(new_int)
                 print(f"The movie is {new_int} years old, so the current price is {new_price:.2f}sek.")
     elif choice == "3": # Check value of a CD # Doesnt work yet
         print("Check the values of a CD.")
         title = input("Enter album title: ")
         cursor.execute("SELECT * FROM cd WHERE title=?", (title,))
         cd = cursor.fetchone()
-        cursor.execute("SELECT COUNT(title) FROM cd GROUP BY title HAVING COUNT(title) > 1")
-        multiple = cursor.fetchmany(2)
+        #cursor.execute("SELECT COUNT(title) FROM cd GROUP BY title HAVING COUNT(title) > 1")
+        cursor.execute("""SELECT SUM(COUNT)
+                       FROM (
+                           SELECT title, COUNT(title) count
+                           FROM cd WHERE title=?
+                           GROUP BY title
+                           HAVING COUNT(title) > 1
+                       )
+                       GROUP BY title
+                       """, (title,))
+        multiple = cursor.fetchall()
+        
         for x in multiple:
             value = int(x[0])
         

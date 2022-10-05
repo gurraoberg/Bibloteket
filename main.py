@@ -11,6 +11,8 @@ library_db = "data/library.db"
 lb = "\n" # Linebreak
 current_year = 2022
 year_inc = 1972
+connection = sqlite3.connect(library_db)
+cursor = connection.cursor()
 
 def menu(): # Menu
     print("1. Add Media")
@@ -53,6 +55,7 @@ def menu(): # Menu
             clear()
             menu()
     elif choice == "0":
+        connection.close()
         exit()
 
 def menu_back(): # Goes back to menu.
@@ -64,9 +67,6 @@ def menu_back(): # Goes back to menu.
             print("Press 0 to go back to menu.")
 
 def import_library(): # Creating SQL table and importing CSV to it.
-    connection = sqlite3.connect(library_db)
-    cursor = connection.cursor()
-    
     with open(csv_media, "r", encoding="utf-8") as file1, open(csv_movies) as file2, open(csv_cd) as file3:
         data1 = csv.reader(file1)
         data2 = csv.reader(file2)
@@ -113,23 +113,19 @@ def import_library(): # Creating SQL table and importing CSV to it.
             print("Table not empty")
             
         connection.commit()
-        connection.close()
 
 def search(): # Works pretty good, cluttery
-    connection = sqlite3.connect(library_db)
-    cursor = connection.cursor()
-    
     search = input("Search the library with a title: ").lower()
     cursor.execute("""SELECT * FROM
-                   (SELECT title, author, price, year FROM library
+                   (SELECT title FROM library
                    UNION ALL
-                   SELECT title, director, price, year FROM movies
+                   SELECT title FROM movies
                    UNION ALL
-                   SELECT title, artist, price, year FROM cd
+                   SELECT title FROM cd
                    ) WHERE title=?
                    """, (search,))
-    book = cursor.fetchone()
-    if book == None:
+    lib = cursor.fetchone()
+    if lib == None:
         print("Sorry, we dont have that in the library.")
         menu()
     else:
@@ -139,7 +135,6 @@ def search(): # Works pretty good, cluttery
         movies = cursor.fetchone()
         cursor.execute("SELECT * FROM cd WHERE title=?", (search,))
         cd = cursor.fetchone()
-        
     
         if library:
             new_int = current_year - library[4]
@@ -160,9 +155,6 @@ def search(): # Works pretty good, cluttery
             print(f"Current Price: {new_price:.2f}sek | Tracks: {cd[2]} | Album Length: {cd[3]}min")
     
 def add_media(): # Add media to library.
-    connection = sqlite3.connect(library_db)
-    cursor = connection.cursor()
-    
     print("1. Add book")
     print("2. Add movie")
     print("3. Add CD")
@@ -227,15 +219,11 @@ def add_media(): # Add media to library.
         clear()
         menu()
     connection.commit()
-    connection.close()
 
 def clear(): # Clear the terminal
         os.system('cls' if os.name=='nt' else 'clear')
 
 def check_value(): # WORKS
-    connection = sqlite3.connect(library_db)
-    cursor = connection.cursor()
-    
     print("1. Check value of a book")
     print("2. Check value of a movie")
     print("3. Check value of a CD")
@@ -313,9 +301,6 @@ def check_value(): # WORKS
         menu()
 
 def sorted_book(): # Sorted books in ascending order.
-    connection = sqlite3.connect(library_db)
-    cursor = connection.cursor()
-    
     cursor.execute("SELECT * FROM library ORDER BY title")
     result = cursor.fetchall()
     if result == None:
@@ -330,13 +315,8 @@ def sorted_book(): # Sorted books in ascending order.
         else:
             print("Press 0 to go back to menu.")
             
-    connection.commit()
-    connection.close()
 
 def whole_value(): # Prints the combined value of the library.
-    connection = sqlite3.connect(library_db)
-    cursor = connection.cursor()
-    
     cursor.execute("SELECT SUM(price) FROM library") ## Fungerar
     books = cursor.fetchone()[0]
     cursor.execute("SELECT SUM(price) FROM movies")

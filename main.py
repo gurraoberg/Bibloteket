@@ -16,7 +16,7 @@ def menu(): # Menu
     print("1. Add Media")
     print("2. Search Media")
     print("3. Check Value")
-    print("0. Exit")
+    print("0. Exit Program")
     choice = input("Make a choice: ")
     if choice == "1": # Add
         clear()
@@ -24,12 +24,12 @@ def menu(): # Menu
         menu_back()
     elif choice == "2": # Search
         clear()
-        print("1. Search books")
+        print("1. Search the library")
         print("2. List books in ascending order")
         print("0. Go back.")
         search_choice = input("Make a choice: ")
         if search_choice == "1":
-            search_books()
+            search()
             menu_back()
         elif search_choice == "2":
             sorted_book()
@@ -115,28 +115,49 @@ def import_library(): # Creating SQL table and importing CSV to it.
         connection.commit()
         connection.close()
 
-def search_books(): # Search for a book with title. IMPROVE
+def search(): # Works pretty good, cluttery
     connection = sqlite3.connect(library_db)
     cursor = connection.cursor()
     
-    search = input("Search for book title: ").lower()
-    #cursor.execute("SELECT * FROM library WHERE Title=?", (search,))
+    search = input("Search the library with a title: ").lower()
     cursor.execute("""SELECT * FROM
-                   (SELECT title, author FROM library
+                   (SELECT title, author, price, year FROM library
                    UNION ALL
-                   SELECT title, director FROM movies
+                   SELECT title, director, price, year FROM movies
                    UNION ALL
-                   SELECT title, artist FROM cd
+                   SELECT title, artist, price, year FROM cd
                    ) WHERE title=?
                    """, (search,))
     book = cursor.fetchone()
     if book == None:
-        print("Book not found.")
+        print("Sorry, we dont have that in the library.")
         menu()
     else:
-        print(f"{book[0]}, {book[1]}")
-        #print(f"Title: {book[0]}{lb}Author: {book[1]}{lb}Pages: {book[2]}{lb}Purchase price: {book[3]}{lb}Publishing year: {book[4]}")
-        #print(f"Current value: {new_price}")
+        cursor.execute("SELECT * FROM library WHERE title=?", (search,))
+        library = cursor.fetchone()
+        cursor.execute("SELECT * FROM movies WHERE title=?", (search,))
+        movies = cursor.fetchone()
+        cursor.execute("SELECT * FROM cd WHERE title=?", (search,))
+        cd = cursor.fetchone()
+        
+    
+        if library:
+            new_int = current_year - library[4]
+            new_price = library[3] * 0.9**(new_int)
+            print(f"Title: {library[0]} | Author: {library[1]} | Purchase Price: {library[3]}sek")
+            print(f"Current Price: {new_price:.2f}sek | Pages: {library[2]} | Year: {library[4]}")
+            
+        elif movies:
+            new_int = current_year - movies[4]
+            new_price = movies[3] * 0.9**(new_int)
+            print(f"Title: {movies[0]} | Director: {movies[1]} | Purchase Price: {movies[3]}sek | Year: {movies[4]}")
+            print(f"Current Price: {new_price:.2f}sek | Playtime: {movies[2]}min | Wear: {movies[5]}/10") 
+            
+        elif cd:
+            new_int = current_year - cd[5]
+            new_price = cd[4] * 0.9**(new_int)
+            print(f"Title: {cd[0]} | Artist: {cd[1]} | Purchase Price: {cd[4]}sek | Year: {cd[5]}")
+            print(f"Current Price: {new_price:.2f}sek | Tracks: {cd[2]} | Album Length: {cd[3]}min")
     
 def add_media(): # Add media to library.
     connection = sqlite3.connect(library_db)
@@ -204,7 +225,7 @@ def add_media(): # Add media to library.
                 menu()          
     elif choice == "0":
         clear()
-        menu_back()
+        menu()
     connection.commit()
     connection.close()
 
@@ -223,7 +244,7 @@ def check_value(): # WORKS
     
     if choice == "1": # Check value of a book # WORKS
         print("Check the values of a book.")
-        title = input("Enter title: ")
+        title = input("Enter title: ").lower()
         cursor.execute("SELECT * FROM library WHERE title=?", (title,))
         book = cursor.fetchone()
         if book == None:
@@ -238,27 +259,27 @@ def check_value(): # WORKS
                 new_int = current_year - book[4]
                 new_price = book[3] * 0.9**(new_int) ### FUNKAR LÖST
                 print(f"The book is {new_int} years old, so the current price is {new_price:.2f}sek.")
+                return new_price
     elif choice == "2": # Check value of a movie # WORKS
         print("Check the values of a movie.")
-        title = input("Enter title: ")
+        title = input("Enter title: ").lower()
         cursor.execute("SELECT * FROM movies WHERE title=?", (title,))
         movie = cursor.fetchone()
-        
-        new_int = current_year - movie[4]
-        new_price = movie[3] * 0.9**(new_int)
         
         if movie == None:
             print("Movie not found.")
         else:
+            new_int = current_year - movie[4]
+            new_price = movie[3] * 0.9**(new_int)
             if movie[5] < 10:
                 wear_price = new_price * float(movie[5]) / 10
-                print(f"Wear Price: {wear_price:.2f}sek")
+                print(f"Movie Title: {movie[0]} | Wear Price: {wear_price:.2f}sek")
             else:
                 print(f"Purchase Price: {movie[3]}sek{lb}Year: {movie[4]}")
-                print(f"The movie is {new_int} years old, so the current price is {new_price:.2f}sek.")
+                print(f"The movie is {new_int} years old but the condition is {movie[5]}/10, so the current price is {new_price:.2f}sek.")
     elif choice == "3": # Check value of a CD # WORKS
         print("Check the values of a CD.")
-        title = input("Enter album title: ")
+        title = input("Enter album title: ").lower()
         cursor.execute("SELECT * FROM cd WHERE title=?", (title,))
         cd = cursor.fetchone()
         
@@ -287,10 +308,10 @@ def check_value(): # WORKS
                 print(f"{title} is worth {result:.0f}sek, since we have {value} copies of it.")
             else:
                 print(f"Purchase Price: {cd[4]}sek Year: {cd[5]}")
-                print(f"The CD is {new_int} years old, so the current price is {new_price:.2f}sek.")
+                print(f"The CD is {new_int} years old, so the current price is {new_price:.2f}sek.{lb}We have {value} copy of it.")
     elif choice == "0":
         menu()
-        
+
 def sorted_book(): # Sorted books in ascending order.
     connection = sqlite3.connect(library_db)
     cursor = connection.cursor()
@@ -301,7 +322,8 @@ def sorted_book(): # Sorted books in ascending order.
         print("Book not found.")
         menu()
     else:
-        print(f"Sorted by title: {result[0]}{lb}") # Sorted by ascending order.
+        print(result)
+        #print(f"Sorted by title: {lb}{result[0]}{lb}{result[1]}") # Sorted by ascending order.
         back = input("\nGo back to menu, Enter 0: ")
         if back == "0":
             menu()

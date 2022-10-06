@@ -17,6 +17,7 @@ def menu(): # Menu
     3. Check Value
     4. Borrow Media
     5. Return Media
+    6. Borrowed Media
     0. Exit Program
           """)
     choice = input("Make a choice: ")
@@ -64,6 +65,9 @@ def menu(): # Menu
         menu_back()
     elif choice == "5":
         borrow.return_media()
+        menu_back()
+    elif choice == "6":
+        borrow.who_borrowed()
         menu_back()
     elif choice == "0":
         connection.close()

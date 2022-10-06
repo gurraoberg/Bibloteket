@@ -1,7 +1,7 @@
 import csv
 import os
-import classes
 import sqlite3
+import borrow
 
 library_db = "data/library.db"
 lb = "\n" # Linebreak
@@ -15,6 +15,9 @@ def menu(): # Menu
     1. Add Media
     2. Search Media
     3. Check Value
+    4. Borrow Media
+    5. Return Media
+    6. Borrowed Media
     0. Exit Program
           """)
     choice = input("Make a choice: ")
@@ -56,6 +59,16 @@ def menu(): # Menu
         elif value_choice == "0":
             clear()
             menu()
+    elif choice == "4":
+        borrow.table_register()
+        borrow.borrow()
+        menu_back()
+    elif choice == "5":
+        borrow.return_media()
+        menu_back()
+    elif choice == "6":
+        borrow.who_borrowed()
+        menu_back()
     elif choice == "0":
         connection.close()
         exit()
@@ -178,6 +191,7 @@ def add_media(): # Add media to library.
             price = input("Enter Price: ").lower()
             year = input("Enter Year: ").lower()
             cursor.execute("INSERT INTO library VALUES (?, ?, ?, ?, ?)", (title, author, pages, price, year,))
+            connection.commit()
             print(f"Added {title} to the library.")
         else:
             print("This book already exists.")
@@ -193,6 +207,7 @@ def add_media(): # Add media to library.
             year = input("Enter Year: ").lower()
             wear = input("Enter Wear: ")
             cursor.execute("INSERT INTO movies VALUES (?, ?, ?, ?, ?, ?)", (title, director, length, price, year, wear,))
+            connection.commit()
             print(f"Added {title} to the movie library.")
         else:
             print("This movie already exists.")
@@ -208,6 +223,7 @@ def add_media(): # Add media to library.
             price = input("Enter Price: ").lower()
             year = input("Enter Year: ").lower()
             cursor.execute("INSERT INTO cd VALUES (?, ?, ?, ?, ?, ?)", (title, artist, tracks, length, price, year,))
+            connection.commit()
             print(f"Added {title} to the CD library.")
         else:
             print("This CD already exists, would you like to add it anyway? ")
@@ -220,6 +236,7 @@ def add_media(): # Add media to library.
                 price = input("Enter Price: ").lower()
                 year = input("Enter Year: ").lower()
                 cursor.execute("INSERT INTO cd VALUES (?, ?, ?, ?, ?, ?)", (title, artist, tracks, length, price, year,))
+                connection.commit()
                 print(f"Added {title} to the CD library.")
             else:
                 menu()          
@@ -236,7 +253,6 @@ def check_value(): # Checking new values
     1. Check value of a book
     2. Check value of a movie
     3. Check value of a CD
-    4. Check total value of the library
     0. Go back.
           """)
     choice = input("Make a choice: ")
@@ -307,8 +323,6 @@ def check_value(): # Checking new values
             else:
                 print(f"Purchase Price: {cd[4]}sek Year: {cd[5]}")
                 print(f"The CD is {new_int} years old, so the current price is {new_price:.2f}sek.{lb}We have {value} copy of it.")
-    elif choice == "4":
-        print(new_price)
     elif choice == "0":
         menu()
 
@@ -364,7 +378,7 @@ def whole_value(): # Prints the combined value of the library.
         print(f"Total value of the library is {value:.2f}sek.")
     future = int(input("Enter a year from now to see the value: "))
     if future < current_year:
-        print("Cannot go back in time.")
+        print(f"Cannot go back in time. Current year is {current_year}")
     else:
         years = future - current_year
         new_value = value * 0.9**(years)
